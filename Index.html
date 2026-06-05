@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>روزانہ معمولات ٹریکر</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    font-family:'Noto Nastaliq Urdu','Segoe UI',sans-serif;
+}
+
+body{
+    background:#121212;
+    color:#fff;
+    padding:20px;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+}
+
+h1{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+.card{
+    background:#1e1e1e;
+    border-radius:16px;
+    padding:20px;
+    margin-bottom:20px;
+    box-shadow:0 2px 8px rgba(0,0,0,.3);
+}
+
+.section-title{
+    font-size:22px;
+    margin-bottom:15px;
+    color:#4CAF50;
+}
+
+.item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 0;
+    border-bottom:1px solid #333;
+}
+
+.item:last-child{
+    border-bottom:none;
+}
+
+.label{
+    font-size:18px;
+}
+
+.toggle-group{
+    display:flex;
+    gap:10px;
+}
+
+.btn{
+    border:none;
+    padding:8px 14px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:18px;
+    transition:.2s;
+}
+
+.tick{
+    background:#2e7d32;
+    color:white;
+}
+
+.cross{
+    background:#c62828;
+    color:white;
+}
+
+.active{
+    transform:scale(1.1);
+    outline:3px solid white;
+}
+
+.time-box{
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+}
+
+.time-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+input[type="time"]{
+    padding:10px;
+    border-radius:10px;
+    border:none;
+    font-size:16px;
+}
+
+.submit-btn{
+    width:100%;
+    background:#25D366;
+    color:white;
+    border:none;
+    padding:16px;
+    border-radius:14px;
+    font-size:20px;
+    cursor:pointer;
+    margin-top:10px;
+}
+
+.preview{
+    white-space:pre-wrap;
+    background:#0f0f0f;
+    padding:15px;
+    border-radius:10px;
+    margin-top:20px;
+    border:1px solid #333;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>📿 روزانہ معمولات ٹریکر</h1>
+
+<div id="app"></div>
+
+<div class="card">
+    <div class="section-title">⏰ اوقات</div>
+
+    <div class="time-box">
+
+        <div class="time-row">
+            <label>جاگنے کا وقت</label>
+            <input type="time" id="wakeTime">
+        </div>
+
+        <div class="time-row">
+            <label>سونے کا وقت</label>
+            <input type="time" id="sleepTime">
+        </div>
+
+    </div>
+
+    <button class="submit-btn" onclick="submitReport()">
+        WhatsApp پر شیئر کریں
+    </button>
+
+    <div id="preview" class="preview" style="display:none"></div>
+</div>
+
+</div>
+
+<script>
+
+const sections = {
+
+"فرائض":[
+"فجر باجماعت",
+"ظہر باجماعت",
+"عصر باجماعت",
+"مغرب باجماعت",
+"عشاء باجماعت"
+],
+
+"نوافل":[
+"تہجد",
+"اشراق",
+"چاشت",
+"اوابین"
+],
+
+"تلاوت":[
+"تلاوت قرآن پاک",
+"سورة یس",
+"سورة الواقعة",
+"سورة الملک"
+],
+
+"اذکار":[
+"مسنون تسبیحات (صبح)",
+"مسنون تسبیحات (شام)"
+],
+
+"حفاظت کرنے کی چیزیں":[
+"نظر کی حفاظت",
+"کانوں کی حفاظت",
+"زبان کی حفاظت"
+],
+
+"دیگر معمولات":[
+"آیت الکرسی بعد از نماز",
+"مناجات فقیر",
+"سوتے وقت آیت الکرسی اور 3 قل"
+]
+
+};
+
+const state = {};
+
+const app = document.getElementById("app");
+
+for(const section in sections){
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    let html = `<div class="section-title">${section}</div>`;
+
+    sections[section].forEach(item=>{
+
+        state[item] = false;
+
+        html += `
+        <div class="item">
+
+            <div class="label">${item}</div>
+
+            <div class="toggle-group">
+
+                <button class="btn tick"
+                onclick="setValue('${item}',true,this)">
+                ✓
+                </button>
+
+                <button class="btn cross active"
+                onclick="setValue('${item}',false,this)">
+                ✕
+                </button>
+
+            </div>
+
+        </div>
+        `;
+    });
+
+    card.innerHTML = html;
+    app.appendChild(card);
+}
+
+function setValue(item,val,btn){
+
+    state[item] = val;
+
+    const group = btn.parentElement;
+
+    [...group.children].forEach(b=>{
+        b.classList.remove("active");
+    });
+
+    btn.classList.add("active");
+
+    saveData();
+}
+
+function saveData(){
+    localStorage.setItem("dailyTracker",JSON.stringify(state));
+}
+
+function formatDate(){
+
+    const d = new Date();
+
+    return d.toLocaleDateString("en-US",{
+        year:"numeric",
+        month:"long",
+        day:"numeric"
+    });
+}
+
+function submitReport(){
+
+    let report = "";
+
+    const date = new Date();
+
+    report += `*تاریخ: ${formatDate()}*\n`;
+    report += `*دن: ${date.getDate()}*\n\n`;
+
+    for(const section in sections){
+
+        report += `*${section}*\n`;
+
+        sections[section].forEach(item=>{
+
+            report += `(${state[item] ? "✓":"✕"}) ${item}\n`;
+
+        });
+
+        report += "\n";
+    }
+
+    const wake =
+    document.getElementById("wakeTime").value || "-";
+
+    const sleep =
+    document.getElementById("sleepTime").value || "-";
+
+    report += `جاگنے کا وقت: ${wake}\n`;
+    report += `سونے کا وقت: ${sleep}`;
+
+    document.getElementById("preview").style.display="block";
+    document.getElementById("preview").textContent=report;
+
+    const whatsappUrl =
+    `https://wa.me/?text=${encodeURIComponent(report)}`;
+
+    window.open(whatsappUrl,"_blank");
+}
+
+</script>
+
+</body>
+</html>
